@@ -13,7 +13,7 @@ public abstract class BaseFrame extends JFrame{
     public BaseFrame() {
         Image icon = null;
         try {
-            icon = ImageIO.read(new File("resource/image/hs.png"));
+            icon = ImageIO.read(new File("resource/icon/hs.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
