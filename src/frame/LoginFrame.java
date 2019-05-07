@@ -2,29 +2,35 @@ package frame;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import util.Iostream;
+import util.PasswordHelper;
+import util.UIDesign;
+import util.URLCommunicate;
+import util.WebSocketConnection;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
-public class LoginFrame extends BaseFrame{
+public class LoginFrame extends BaseFrame {
+    public static long username;
+    public static String password;
+    public static WebSocketConnection webSocket;
+    private WebSocketConnection webSocketConnection;
     private JPanel panel;
     private JTextField textField;
     private JPasswordField passwordField;
     private JLabel retrieve;
     private JCheckBox jCheckBox;
     private JButton button;
+    private JLabel register;
+    private String uname;
 
     public LoginFrame() {
         setTitle("用户登录");
@@ -34,41 +40,30 @@ public class LoginFrame extends BaseFrame{
     public JComponent generate() {
         panel = new JPanel();
         panel.setBackground(new Color(0x52B7F7));
-        panel.setBorder(new EmptyBorder(24,50,40,30));
+        panel.setBorder(new EmptyBorder(24, 60, 40, 30));
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        Font font1 = new Font("方正兰亭超细黑简体 常规", Font.LAYOUT_LEFT_TO_RIGHT, 13);
-        Font font2 = new Font("等线", Font.LAYOUT_LEFT_TO_RIGHT, 20);
-        Font font3 = new Font("等线", Font.LAYOUT_LEFT_TO_RIGHT, 16);
+        Font font1 = new Font("方正兰亭超细黑简体 常规", Font.PLAIN, 13);
+        Font font2 = new Font("等线", Font.PLAIN, 20);
+        Font font3 = new Font("等线", Font.PLAIN, 16);
 
-        this.setUndecorated(true);
-        ImageIcon closeIcon = new ImageIcon("resource/icon/close.png");
-        JButton close = new JButton(closeIcon);
-        close.setBackground(new Color(0x52B7F7));
-        close.setContentAreaFilled(false); // 取消按钮边框
-        close.setFocusable(false); // 取消文字边框
+        JButton icons[] = UIDesign.unDecorated(this);
+
+        JButton mini = icons[0];
+        gridBagConstraints.gridx = 5;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridheight = 1;
+        gridBagConstraints.gridwidth = 1;
+        UIDesign.getMinimizeFunction(mini, this);
+        panel.add(mini, gridBagConstraints);
+
+        JButton close = icons[1];
         gridBagConstraints.gridx = 6;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridheight = 1;
         gridBagConstraints.gridwidth = 1;
-        close.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                super.mouseEntered(e);
-                setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-            public void mouseExited(MouseEvent e) {
-                super.mouseExited(e);
-                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            }
-            public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    dispose();
-                }
-            }
-        });
+        UIDesign.getCloseFunction(close, this);
         panel.add(close, gridBagConstraints);
 
         ImageIcon imageIcon = new ImageIcon("resource/image/logo.png");
@@ -105,6 +100,25 @@ public class LoginFrame extends BaseFrame{
         textField.setBackground(new Color(0x7CCDF7));
         panel.add(textField, gridBagConstraints);
 
+        // 注册前面的空格不要删，好看
+        register = new JLabel("    注册");
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridheight = 1;
+        gridBagConstraints.gridwidth = 1;
+        register.setFont(font3);
+        register.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    showFrame(new RegisterFrame(), null);
+                }
+            }
+        });
+        register.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.add(register, gridBagConstraints);
+
         JLabel password = new JLabel("密码：");
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 4;
@@ -123,7 +137,43 @@ public class LoginFrame extends BaseFrame{
         gridBagConstraints.weightx = 0.8;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         passwordField.setBackground(new Color(0x7CCDF7));
+        // 判断用户是否有保存密码，有的话直接给
+        textField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                super.focusLost(e);
+                uname = textField.getText();
+                String pws = null;
+                try {
+                    pws = Iostream.input("cache/account/" + uname);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                if (!"".equals(pws)) {
+                    passwordField.setText(pws);
+                }
+            }
+        });
+
         panel.add(passwordField, gridBagConstraints);
+
+        retrieve = new JLabel("找回密码");
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridheight = 1;
+        gridBagConstraints.gridwidth = 1;
+        retrieve.setFont(font3);
+        retrieve.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    System.out.println("Wow!");  // TODO:写一个找回密码的窗口
+                }
+            }
+        });
+        retrieve.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.add(retrieve, gridBagConstraints);
 
         JLabel separation = new JLabel("  ");
         gridBagConstraints.gridx = 2;
@@ -132,13 +182,11 @@ public class LoginFrame extends BaseFrame{
         gridBagConstraints.gridwidth = 5;
         panel.add(separation, gridBagConstraints);
 
-        jCheckBox = new JCheckBox("记住密码 ");
-        gridBagConstraints.gridx = 2;
+        jCheckBox = new JCheckBox("记住密码");
+        gridBagConstraints.gridx = 6;
         gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridheight = 1;
         gridBagConstraints.gridwidth = 1;
-        gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.fill = GridBagConstraints.NONE;
+        gridBagConstraints.gridheight = 1;
         jCheckBox.setOpaque(false);
         jCheckBox.setFont(font3);
         panel.add(jCheckBox, gridBagConstraints);
@@ -149,80 +197,71 @@ public class LoginFrame extends BaseFrame{
         gridBagConstraints.gridheight = 1;
         gridBagConstraints.gridwidth = 1;
         gridBagConstraints.weightx = 0.5;
-        button.addActionListener(e -> {
-                setCursor(new Cursor(Cursor.WAIT_CURSOR));
-                textField.setEnabled(false);
-                passwordField.setEnabled(false);
-                retrieve.setEnabled(false);
-                jCheckBox.setEnabled(false);
-                button.setEnabled(false);
-
-            try {
-                // link
-                URL url = new URL("http://121.250.216.117:8080/login");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setDoOutput(true);
-                connection.setDoInput(true);
-                connection.setRequestMethod("POST");
-//                connection.setRequestProperty("stuNo", textField.getText());
-//                connection.setRequestProperty("password", passwordField.getText());
-                connection.connect();
-                // output
-                OutputStream outputStream = connection.getOutputStream();
-                String id = "stuNo=" + URLEncoder.encode(textField.getText()) + "&password=" + URLEncoder.encode(passwordField.getText());
-                outputStream.write(id.getBytes());  // 暂时存在缓冲流
-                outputStream.flush();  // 把缓冲流推到后端
-                // input
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String input = "";
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    input += line + "\n";
-                }
-                // close
-                outputStream.close();
-                bufferedReader.close();
-                System.out.println(input);  // 发布的时候记得删掉哦
-                JSONObject jsonObject = new JSONObject(input);
-                int status = jsonObject.getInt("status");
-                if (status == 0) {
-                    System.out.println("登录成功！");
-                    dispose();  // 销毁窗口
-                } else {
-                    JOptionPane.showMessageDialog(this, "用户名或密码错误！");
-                    restore();
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                JOptionPane.showMessageDialog(this,"连接失败");  // dialog的子类。错误信息提示
-                restore();
-            } catch (JSONException e1) {
-                e1.printStackTrace();
-                JOptionPane.showMessageDialog(this, "无法解析服务器信息！");
-                restore();
-            }
-        });
-        panel.add(button, gridBagConstraints);
-
-        retrieve = new JLabel("找回密码");
-        gridBagConstraints.gridx = 5;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridheight = 1;
-        gridBagConstraints.gridwidth = 1;
-        gridBagConstraints.weightx = 0.5;
-        retrieve.setFont(font3);
-        retrieve.addMouseListener(new MouseAdapter() {
+        button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    System.out.println("Wow!");  // 写一个找回密码的窗口
-                }
+//                showFrame(new MainFrame(), null);
+//                dispose(); // 记得删除哦
             }
         });
-        retrieve.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        panel.add(retrieve, gridBagConstraints);
+        button.addActionListener(e -> {
+            setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            textField.setEnabled(false);
+            passwordField.setEnabled(false);
+            retrieve.setEnabled(false);
+            jCheckBox.setEnabled(false);
+            button.setEnabled(false);
+            register.setEnabled(false);
+            new Thread(() -> {
+                try {
+                    Map<String, Object> output = new HashMap<>();
+                    String usernameString = (textField.getText());
+                    String pwd = passwordField.getText();
+                    // TODO: 测试用：跳过登录，发布时改为 false
+                    if (true && usernameString.isEmpty()) {
+                        usernameString = "201800301020";
+                        pwd = "123456";
+                    }
+                    long username = Long.parseLong(usernameString);
+                    LoginFrame.username = username;
+                    output.put("username", username);
+                    output.put("password", PasswordHelper.encrypt(pwd));
+                    JSONObject input = URLCommunicate.post("http://121.250.216.117:8080/login/do", output);
+                    int status = input.getInt("code");
+                    if (status == 0) {
+                        System.out.println("登录成功！");
+                        // 在这里建立一个webSocket
+                        webSocket = WebSocketConnection.wsConnect("http://121.250.216.117:8080/chat/" + username);
+                        // 在这里用户可以去选择记住密码,若如此，保存到本地
+                        if (jCheckBox.isSelected()) {
+                            LoginFrame.password = pwd;
+                            Iostream.output("cache/account/" + LoginFrame.username, LoginFrame.password);
+                        }
+                        dispose();  // 销毁窗口
+                        JSONObject data = input.getJSONObject("data");
+                        if (data.getInt("authority") == 1) {
+                            showFrame(new MainFrame(), null);
+                        } else {
+                            showFrame(new AdminFrame(), null);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "用户名或密码错误！");
+                        restore();
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "连接失败");  // dialog的子类。错误信息提示
+                    restore();
+                } catch (JSONException e1) {
+                    e1.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "无法解析服务器信息！");
+                    restore();
+                }
+            }).start();
 
+        });
+        panel.add(button, gridBagConstraints);
 
         JLabel explain = new JLabel("  说明：用户名为学号，初始密码为身份证后六位");
         gridBagConstraints.gridx = 1;
@@ -243,6 +282,7 @@ public class LoginFrame extends BaseFrame{
         retrieve.setEnabled(true);
         jCheckBox.setEnabled(true);
         button.setEnabled(true);
+        register.setEnabled(true);
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 }

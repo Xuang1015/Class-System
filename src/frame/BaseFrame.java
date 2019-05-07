@@ -24,7 +24,7 @@ public abstract class BaseFrame extends JFrame{
         return content;
     }
 
-    public static void ShowFrame(BaseFrame thisFrame, Map<String, Object> thisContent) {
+    public static void showFrame(BaseFrame thisFrame, Map<String, Object> thisContent) {
         thisFrame.content = thisContent;
         JComponent pane = thisFrame.generate();
         thisFrame.setContentPane(pane);

@@ -2,6 +2,8 @@
   <library name="json">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../json.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../QQ文件/okhttp-3.12.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../QQ文件/okio-1.14.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
