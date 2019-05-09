@@ -36,7 +36,7 @@ public class AdminNoticePanel extends NoticePanel {
     private void deleteNotice(int row) {
          new Thread(()->{
              Map<String,Object> output = new HashMap<>();
-             output.put("noticeId",notices[row].getId());
+             output.put("id",notices[row].getId());
              try {
                  JSONObject input = URLCommunicate.post("http://121.250.216.117:8080/notice/delete",output);
                  if(input.getInt("code")==-1){

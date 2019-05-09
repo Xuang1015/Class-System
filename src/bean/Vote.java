@@ -17,6 +17,10 @@ public class Vote {
     }
 
     public void setTitle() {
+        if (content.length()<10) {
+            title = content;
+            return;
+        }
         this.title = this.content.substring(0,10) + "……";
     }
 

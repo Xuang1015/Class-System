@@ -137,7 +137,7 @@ public class FilePanel extends Fragment {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                if (files[fileTable.getSelectedRow()].getUploader() == LoginFrame.username) {
+                if (canDelete()) {
                     deleteFileButton.setEnabled(true);
                     deleteFileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 } else {
@@ -160,6 +160,10 @@ public class FilePanel extends Fragment {
                 }
             }
         });
+    }
+
+    protected boolean canDelete() {
+        return files[fileTable.getSelectedRow()].getUploader() == LoginFrame.username;
     }
 
     private void getFiles(int newPage) {

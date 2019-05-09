@@ -22,7 +22,6 @@ public class LoginFrame extends BaseFrame {
     public static long username;
     public static String password;
     public static WebSocketConnection webSocket;
-    private WebSocketConnection webSocketConnection;
     private JPanel panel;
     private JTextField textField;
     private JPasswordField passwordField;
@@ -168,7 +167,7 @@ public class LoginFrame extends BaseFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    System.out.println("Wow!");  // TODO:写一个找回密码的窗口
+                    BaseFrame.showFrame(new ResetPasswordFrame(),null);
                 }
             }
         });
@@ -220,8 +219,8 @@ public class LoginFrame extends BaseFrame {
                     String pwd = passwordField.getText();
                     // TODO: 测试用：跳过登录，发布时改为 false
                     if (true && usernameString.isEmpty()) {
-                        usernameString = "201800301020";
-                        pwd = "123456";
+                        usernameString = "201800301032";
+                        pwd = "L20001203";
                     }
                     long username = Long.parseLong(usernameString);
                     LoginFrame.username = username;

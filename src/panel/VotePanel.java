@@ -165,15 +165,17 @@ public class VotePanel extends Fragment {
                 for (int i = 0; i < choLen; i++) {
                     choices[i] = new Choice();
                     choices[i].setChoiceId(choicesJSON.getJSONObject(i).getLong("choiceId"));
+                    choices[i].setNum(choicesJSON.getJSONObject(i).getLong("num"));
                     choices[i].setChoiceContent(choicesJSON.getJSONObject(i).getString("content"));
                 }
-                // 在这里使用一个公告窗口来显示
+                // 在这里使用一个窗口来显示
                 Map<String, Object> component = new HashMap<>();
                 component.put("votes", votes);
                 component.put("choices",choices);
                 component.put("comments", comments);
                 component.put("voteTable", voteTable);
                 component.put("voteId", votes[voteTable.getSelectedRow()].getVoteId());
+                component.put("voteStatus", votes[voteTable.getSelectedRow()].getStatus());
                 BaseFrame.showFrame(new ShowVoteFrame(), component);
             } catch (IOException e) {
                 e.printStackTrace();

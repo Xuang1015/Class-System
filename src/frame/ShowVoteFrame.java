@@ -122,6 +122,9 @@ public class ShowVoteFrame extends BaseFrame {
         sendOpinionArea = new JTextArea();
         sendOpinionArea.setFont(font);
         sendOpinionArea.setColumns(1);
+        if ((long) components.get("voteStatus") != LoginFrame.username) {
+            sendOpinionArea.setEditable(false);
+        }
         sendOpinionPanel = new JScrollPane(sendOpinionArea);
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
@@ -162,7 +165,7 @@ public class ShowVoteFrame extends BaseFrame {
         Map<String, Object> output = new HashMap<>();
         output.put("voteId", components.get("voteId"));
         long result = 0;
-        for (Choice choice: choices) {
+        for (Choice choice : choices) {
             if (buttonGroup.getSelection().equals(choice.getChoiceContent())) {
                 result = choice.getChoiceId();
             }

@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import util.DataTypeChange;
+import util.Iostream;
 import util.URLCommunicate;
 
 import javax.imageio.ImageIO;
@@ -60,7 +61,7 @@ public class ChatPanel extends Fragment {
 
         Image image;
         try {
-            image = ImageIO.read(new File("resource/image/bg.jpg"));
+            image = ImageIO.read(new File("resource/image/bg.png"));
         } catch (IOException e) {
             e.printStackTrace();
             image = null;
@@ -114,7 +115,7 @@ public class ChatPanel extends Fragment {
         });
         // 接受并显示即时消息的监听器
         LoginFrame.webSocket.setMessageListener(0, message -> {
-            messageArea.append(message.getName() + "(" + DataTypeChange.time2String(message.getTime()) + ")" + ":" + "\n" + "    " +message.getMsg() + "\n");
+            messageArea.append(message.getName() + "(" + DataTypeChange.time2String(message.getTime()) + ")" + ":" + "\n" + "    " + message.getMsg() + "\n");
             messageArea.updateUI();
         });
         chatpanel.add(massagePanel, gridBagConstraints);
@@ -160,7 +161,12 @@ public class ChatPanel extends Fragment {
         addRoomButton = new JButton("创建房间");
         addRoomButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         addRoomButton.addActionListener(e -> {
-            BaseFrame.showFrame(new AddRoomFrame(), null);
+            Map component = new HashMap();
+            component.put("memberList", memberList);
+            component.put("members", members);
+            component.put("roomList", roomList);
+            component.put("rooms", rooms);
+            BaseFrame.showFrame(new AddRoomFrame(), component);
         });
         top.add(addRoomButton);
 
@@ -170,9 +176,15 @@ public class ChatPanel extends Fragment {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                // 双击获取成员列表
+                // 双击获取成员列表.先将现在的消息放到缓存，再重写消息面板
                 if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
                     getMemberList(rooms[roomList.getSelectedIndex()].getRooomId());
+                    try {
+                        Iostream.output("cache/message/" + members[0].getRoomId(), messageArea.getText());
+                        messageArea.setText(Iostream.input("cache/message/" + rooms[roomList.getSelectedIndex()].getRooomId()));
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
                 }
             }
         });
@@ -202,7 +214,6 @@ public class ChatPanel extends Fragment {
                     addPrivateRoom(members[memberList.getSelectedIndex()]);
                     getRoomList();
                     roomList.updateUI();
-                    //TODO:看看列表
                     // 先确定房主，再清空成员列表
 //                    memberList.setListData(new Object[0]);
                     memberList.updateUI();
@@ -245,8 +256,7 @@ public class ChatPanel extends Fragment {
     private void getRoomList() {
         new Thread(() -> {
             Map<String, Object> output = new HashMap<>();
-            output.put("page", 0);
-            output.put("size", 300);
+            output.put("username", LoginFrame.username);
             try {
                 JSONObject input = URLCommunicate.get("http://121.250.216.117:8080/chat/getRoomList", output);
                 JSONObject data = input.getJSONObject("data");
@@ -259,15 +269,19 @@ public class ChatPanel extends Fragment {
                     temp = new JSONObject(resultArray.getString(i));
                     rooms[i] = new Room();
                     rooms[i].setRooomId(temp.getLong("roomId"));
-                    // 在这里判断大厅,放到tempRoom中
+                    rooms[i].setRoomTitle(temp.getString("title"));
+                    // 在这里判断大厅,放到tempRoom
                     if (rooms[i].getRooomId() == 0) {
                         tempRoom = rooms[i];
+                        if (i == 0) {
+                            continue;
+                        }
+                        System.arraycopy(rooms, 0, rooms, 1, i);
+                        rooms[0] = tempRoom;
                     }
-                    rooms[i].setRoomTitle(temp.getString("title"));
                 }
-                System.arraycopy(rooms, 0, rooms, 1, rooms.length - 1);
-                rooms[0] = tempRoom;
                 roomList.setListData(rooms);
+
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
@@ -297,7 +311,7 @@ public class ChatPanel extends Fragment {
                         members[i].setAuthority(temp.getInt("authority"));
                         members[i].setRoomId(temp.getLong("roomId"));
                         int stand = temp.getInt("isOnline");
-                        if (stand==1) {
+                        if (stand == 1) {
                             members[i].setState("在线");
                         } else {
                             members[i].setState("离线");
@@ -328,32 +342,11 @@ public class ChatPanel extends Fragment {
                 personalRoom.setRoomTitle(data.getString("title"));
                 getRoomList();
                 roomList.updateUI();
+                Iostream.output("cache/message/" + personalRoom.getRooomId(), "欢迎来到私人聊天室！");
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
 
-        }).start();
-    }
-
-    protected void addRoom(String title, ChatMember[] member) {
-        new Thread(() -> {
-            Map<String, Object> output = new HashMap<>();
-            output.put("username", LoginFrame.username);
-            output.put("title", title);
-            try {
-                JSONObject input = URLCommunicate.post("http://121.250.216.117:8080/chat/roomAdd", output);
-                JSONObject data = input.getJSONObject("data");
-                for (ChatMember m : member) {
-                    Map<String, Object> addMemberRequest = new HashMap<>();
-                    addMemberRequest.put("roomId", data.getLong("roomId"));
-                    addMemberRequest.put("username", m.getUsername());
-                    URLCommunicate.post("http://121.250.216.117:8080/chat/addToRoom", addMemberRequest);
-                }
-                getRoomList();
-                roomList.updateUI();
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-            }
         }).start();
     }
 }

@@ -69,11 +69,9 @@ public class WebSocketConnection extends WebSocketListener {
             switch (messageType) {
                 case 1:
                 case 2:
-                    // TODO:恢复名字
                     nameChangeListener.nameChange(message);
                     break;
                 case 3:
-                    //TODO:接受并显示消息
                     MessageListener messageListener = messageListenerHashMap.getOrDefault(message.getRommId(), null);
                     if (messageListener != null) {
                         messageListener.onMessage(message);
@@ -84,7 +82,6 @@ public class WebSocketConnection extends WebSocketListener {
                     }
                     break;
                 case 4:
-                    //TODO:提醒大家有新公告发布了
                     iconChangeListener.iconChange(message);
                     break;
             }

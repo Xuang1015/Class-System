@@ -169,7 +169,6 @@ public class MainFrame extends BaseFrame {
             System.out.println(msg);
             ImageIcon newChatIcon = new ImageIcon("resource/icon/newChat.png");
             chatButton = new JButton(newChatIcon);
-            // TODO: 保存这个信息到本地
         });
         chatButton.addActionListener(e -> {
             chatButton = new JButton(chatIcon);
